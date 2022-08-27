@@ -1,6 +1,7 @@
 notebooks
 data
 preds
+vectors
 env
 __pycache__
 .pth
