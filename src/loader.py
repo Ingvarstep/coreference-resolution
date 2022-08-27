@@ -326,11 +326,11 @@ def lookup_tensor(tokens, vectorizer):
 train_corpus = read_corpus('../data/train/')
 val_corpus = read_corpus('../data/development/')
 test_corpus = read_corpus('../data/test/')
-
+print('Test corpus:', test_corpus[0][0])
 GLOVE = LazyVectors.from_corpus(train_corpus.vocab,
-                                name='glove.840B.300d.txt',
-                                cache='/Users/sob/github/.vector_cache/')
+                                name='glove.6B.300d.txt',
+                                cache='/home/serhiystep/Cache/vector_cache/glove.6B/')
 
 TURIAN = LazyVectors.from_corpus(train_corpus.vocab,
-                                 name='hlbl-embeddings-scaled.EMBEDDING_SIZE=50',
-                                 cache='/Users/sob/github/.vector_cache/')
+                                 name='hlbl-embeddings-scaled.EMBEDDING_SIZE=50.txt',
+                                 cache='/home/serhiystep/Cache/vector_cache/')

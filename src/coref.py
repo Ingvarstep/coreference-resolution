@@ -192,8 +192,8 @@ class DocumentEncoder(nn.Module):
                             batch_first=True)
 
         # Dropout
-        self.emb_dropout = nn.Dropout(0.50, inplace=True)
-        self.lstm_dropout = nn.Dropout(0.20, inplace=True)
+        self.emb_dropout = nn.Dropout(0.50)
+        self.lstm_dropout = nn.Dropout(0.20)
 
     def forward(self, doc):
         """ Convert document words to ids, embed them, pass through LSTM. """
@@ -321,7 +321,6 @@ class PairwiseScore(nn.Module):
     def forward(self, spans, g_i, mention_scores):
         """ Compute pairwise score for spans and their up to K antecedents
         """
-
         # Extract raw features
         mention_ids, antecedent_ids, \
             distances, genres, speakers = zip(*[(i.id, j.id,
@@ -378,7 +377,7 @@ class PairwiseScore(nn.Module):
 
         # Batch and softmax
         # get the softmax of the scores for each span in the document given
-        probs = [F.softmax(tensr) for tensr in with_epsilon]
+        probs = [F.softmax(tensr,dim=0) for tensr in with_epsilon]
         
         # pad the scores for each one with a dummy value, 1000 so that the tensors can 
         # be of the same dimension for calculation loss and what not. 
@@ -439,7 +438,7 @@ class Trainer:
 
         self.__dict__.update(locals())
 
-        self.train_corpus = list(self.train_corpus)
+        self.train_corpus = [doc for doc in list(self.train_corpus) if doc.sents]
         self.val_corpus = self.val_corpus
         
         self.model = to_cuda(model)
@@ -479,7 +478,6 @@ class Trainer:
         epoch_loss, epoch_mentions, epoch_corefs, epoch_identified = [], [], [], []
 
         for document in tqdm(batch):
-
             # Randomly truncate document to up to 50 sentences
             doc = document.truncate()
 
@@ -506,7 +504,6 @@ class Trainer:
 
     def train_doc(self, document):
         """ Compute loss for a forward pass over a document """
-
         # Extract gold coreference links
         gold_corefs, total_corefs, \
             gold_mentions, total_mentions = extract_gold_corefs(document)
@@ -548,7 +545,7 @@ class Trainer:
 
         # Negative marginal log-likelihood
         eps = 1e-8
-        loss = torch.sum(torch.log(torch.sum(torch.mul(probs, gold_indexes), dim=1).clamp_(eps, 1-eps), dim=0) * -1)
+        loss = torch.sum(torch.log(torch.sum(torch.mul(probs, gold_indexes), dim=1).clamp_(eps, 1-eps)) * -1)
 
         # Backpropagate
         loss.backward()
