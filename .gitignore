@@ -4,7 +4,8 @@ preds
 vectors
 env
 __pycache__
-.pth
+.pt
+ckpts
 .vector_cache
 .ipynb_checkpoints
 .DS_Store
