@@ -322,6 +322,8 @@ class PairwiseScore(nn.Module):
         """ Compute pairwise score for spans and their up to K antecedents
         """
         # Extract raw features
+
+
         mention_ids, antecedent_ids, \
             distances, genres, speakers = zip(*[(i.id, j.id,
                                                 i.i2-j.i1, i.genre,
@@ -366,7 +368,8 @@ class PairwiseScore(nn.Module):
 
         # Get antecedent indexes for each span
         antecedent_idx = [len(s.yi) for s in spans if len(s.yi)]
-
+        if antecedent_idx == []:
+            antecedent_idx = [1]
         # Split coref scores so each list entry are scores for its antecedents, only.
         # (NOTE that first index is a special case for torch.split, so we handle it here)
         split_scores = [to_cuda(torch.tensor([]))] \
@@ -426,7 +429,6 @@ class CorefScore(nn.Module):
 
         # Get pairwise scores for each span combo
         spans, coref_scores = self.score_pairs(spans, g_i, mention_scores)
-
         return spans, coref_scores
 
 
@@ -457,7 +459,7 @@ class Trainer:
             self.train_epoch(epoch, *args, **kwargs)
 
             # Save often
-            self.save_model(str(datetime.now()))
+            self.save_model("../ckpts/{}".format(str(datetime.now())))
 
             # Evaluate every eval_interval epochs
             if epoch % eval_interval == 0:
@@ -482,8 +484,11 @@ class Trainer:
             doc = document.truncate()
 
             # Compute loss, number gold links found, total gold links
-            loss, mentions_found, total_mentions, \
+            try:
+                loss, mentions_found, total_mentions, \
                 corefs_found, total_corefs, corefs_chosen = self.train_doc(doc)
+            except:
+                continue
 
             # Track stats by document for debugging
             print(document, '| Loss: %f | Mentions: %d/%d | Coref recall: %d/%d | Corefs precision: %d/%d' \
@@ -672,7 +677,7 @@ class Trainer:
 
     def save_model(self, savepath):
         """ Save model state dictionary """
-        torch.save(self.model.state_dict(), savepath + '.pth')
+        torch.save(self.model.state_dict(), savepath + '.pt')
 
     def load_model(self, loadpath):
         """ Load state dictionary into model """
@@ -685,4 +690,4 @@ class Trainer:
 model = CorefScore(embeds_dim=400, hidden_dim=200)
 # ?? train for 150 epochs, each each train 100 documents
 trainer = Trainer(model, train_corpus, val_corpus, test_corpus, steps=100)
-trainer.train(150)
+trainer.train(10)
